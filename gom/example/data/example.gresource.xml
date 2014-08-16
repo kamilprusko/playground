@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/example/database">
+    <file alias="migration-1.sql">resources/database/migration-1.sql</file>
+  </gresource>
+</gresources>
