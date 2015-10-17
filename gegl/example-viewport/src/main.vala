@@ -1,8 +1,6 @@
 public int main (string[] args)
 {
-    string[] args_copy = args;
-
-    Gegl.init (ref args_copy);
+    Gegl.init (ref args);
 
     if (GtkClutter.init (ref args) != Clutter.InitError.SUCCESS) {
         error ("Unable to initialize GtkClutter");

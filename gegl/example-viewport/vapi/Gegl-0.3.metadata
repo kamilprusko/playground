@@ -2,3 +2,4 @@ Gegl cheader_filename="gegl-0.3/gegl.h"
 ParamSpecFormat skip
 ParamFormat skip
 param_spec_format skip
+init.argv unowned
