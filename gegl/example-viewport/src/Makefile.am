@@ -4,6 +4,7 @@ example_DEPENDENCIES = \
 	$(abs_top_builddir)/vapi/gegl-0.3.vapi
 
 example_SOURCES = \
+	gegl-image.vala \
 	main.vala \
 	window.vala
 
@@ -23,3 +24,4 @@ example_VALAFLAGS = \
 example_LDADD = \
 	$(EXAMPLE_LIBS)
 
+-include $(top_srcdir)/git.mk

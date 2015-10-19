@@ -8,6 +8,13 @@ public int main (string[] args)
 
     Gtk.init (ref args);
 
+
+    Gegl.load_module_directory ("./operations");
+    //    var gegl_operations = Gegl.list_operations ();
+
+    assert (Gegl.has_operation ("example:clutter-image"));
+
+
     var window = new Example.Window ();
     window.title = "GEGL Viewport";
     window.window_position = Gtk.WindowPosition.CENTER;

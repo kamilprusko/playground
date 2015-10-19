@@ -2,16 +2,44 @@ namespace Example
 {
     public class Window : Gtk.Window
     {
-        public GtkClutter.Embed    embed;
-
         public Clutter.Color background_color { get; set; }
+
+        private GtkClutter.Embed embed;
+        private Gegl.Node        pipeline;
+        private Gegl.Node        display_node;
 
         construct {
             this.setup ();
         }
 
+        private void on_buffer_changed ()
+        {
+            message ("buffer changed");
+        }
+
+        private void setup_pipeline ()
+        {
+            var pipeline = new Gegl.Node ();
+            pipeline.set_property ("dont-cache", true);
+
+            var source = pipeline.create_child ("gegl:load");
+            source.set_property ("path", "data/color-checker.png");
+
+            var sink = pipeline.create_child ("gegl:buffer-sink");
+            source.link (sink);
+
+            // this.display_node = pipeline.get_output_proxy ("output");
+            this.display_node = sink;
+
+            this.pipeline = pipeline;
+        }
+
         private void setup ()
         {
+            this.setup_pipeline ();
+
+            this.display_node.process ();  // FIXME TODO: process the node by scheduling a task, mere .process () is a blocking operation
+
             // properties
             this.background_color = Clutter.Color.from_pixel (0x222222FF);
 
@@ -27,43 +55,26 @@ namespace Example
             this.embed.show ();
 
             // stage contents
-            var stage = this.embed.get_stage ();
-            var pixbuf = new Gdk.Pixbuf.from_file ("data/surfer.png");
-            var image = new Clutter.Image ();
-            image.set_data (pixbuf.get_pixels (),
-                            pixbuf.get_has_alpha ()
-                              ? Cogl.PixelFormat.RGBA_8888
-                              : Cogl.PixelFormat.RGB_888,
-                            pixbuf.get_width (),
-                            pixbuf.get_height (),
-                            pixbuf.get_rowstride ());
+            // TODO: There may be many display nodes (in theory) so we should pass the
+            var image = new Example.GeglImage (this.display_node);
 
+            var stage = this.embed.get_stage ();
             stage.set_content_scaling_filters (Clutter.ScalingFilter.TRILINEAR,
                                                Clutter.ScalingFilter.LINEAR);
             stage.set_content_gravity (Clutter.ContentGravity.RESIZE_ASPECT);
             stage.set_content (image);
 
-            // TODO: Gegl texture 
-            //var pipeline = new Gegl.Node ();
-            //pipeline.set_property ("dont-cache", true);
-
-            //var image = pipeline.create_child ("gegl:load");
-            //image.set_property ("path", "data/surfer.png");
-
-            //var texture = new Example.GeglTexture ();
-            //texture.node = pipeline;
-
-            //this.viewport = new Example.Viewport ();
-            //this.viewport.add_child (texture);
-
-            //var stage = this.embed.get_stage ();
-            //stage.add_child (this.viewport);
-
             // signals and bindings
             this.bind_property ("background-color", stage, "color", BindingFlags.SYNC_CREATE);
 
-
             this.add (this.embed);
+        }
+
+        public override void dispose ()
+        {
+            this.pipeline = null;
+
+            base.dispose ();
         }
     }
 }
