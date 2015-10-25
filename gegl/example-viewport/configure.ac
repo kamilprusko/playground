@@ -84,12 +84,12 @@ AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
 # Check for Clutter
 #################
 
-PKG_CHECK_MODULES(CLUTTER,
-    clutter-1.0 >= CLUTTER_REQUIRED,
+PKG_CHECK_MODULES(COGL,
+    cogl-1.0 >= $COGL_REQUIRED,
     have_clutter="yes",
-    have_clutter="no  (Clutter not found)")
+    have_clutter="no  (Cogl not found)")
 
-AM_CONDITIONAL(HAVE_CLUTTER, test "$have_clutter" = "yes")
+AM_CONDITIONAL([HAVE_COGL], test "$have_cogl" = "yes")
 
 
 # Some variables to pass to Makefiles

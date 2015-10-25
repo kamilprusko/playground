@@ -4,6 +4,8 @@ example_DEPENDENCIES = \
 	$(abs_top_builddir)/vapi/gegl-0.3.vapi
 
 example_SOURCES = \
+	internal.c \
+	internal.vapi \
 	gegl-image.vala \
 	main.vala \
 	window.vala

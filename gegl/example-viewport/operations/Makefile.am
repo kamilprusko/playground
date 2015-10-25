@@ -7,13 +7,19 @@ ext_dir = $(libdir)/gegl-example-viewport
 # for a specific dependency.
 ops =
 
-#if HAVE_CLUTTER
-ops += clutter-image.la
-clutter_image_la_SOURCES = clutter-image.c
-clutter_image_la_CFLAGS = $(GEGL_OPERATION_CFLAGS) $(CLUTTER_CFLAGS)
-clutter_image_la_LIBADD = $(GEGL_OPERATION_LIBS) $(CLUTTER_LIBS)
-clutter_image_la_LDFLAGS = $(GEGL_OPERATION_LDFLAGS)
-#endif
+if HAVE_COGL
+ops += cogl-texture.la
+cogl_texture_la_SOURCES = cogl-texture.c
+cogl_texture_la_CFLAGS = $(GEGL_OPERATION_CFLAGS) $(COGL_CFLAGS)
+cogl_texture_la_LIBADD = $(GEGL_OPERATION_LIBS) $(COGL_LIBS)
+cogl_texture_la_LDFLAGS = $(GEGL_OPERATION_LDFLAGS)
+
+ops += cogl-texture-2d.la
+cogl_texture_2d_la_SOURCES = cogl-texture-2d.c
+cogl_texture_2d_la_CFLAGS = $(GEGL_OPERATION_CFLAGS) $(COGL_CFLAGS)
+cogl_texture_2d_la_LIBADD = $(GEGL_OPERATION_LIBS) $(COGL_LIBS)
+cogl_texture_2d_la_LDFLAGS = $(GEGL_OPERATION_LDFLAGS)
+endif
 
 BUILT_SOURCES = $(subst .c,.c.h,$(wildcard $(srcdir)/*.c))
 EXTRA_DIST = $(BUILT_SOURCES)

@@ -12,7 +12,7 @@ public int main (string[] args)
     Gegl.load_module_directory ("./operations");
     //    var gegl_operations = Gegl.list_operations ();
 
-    assert (Gegl.has_operation ("example:clutter-image"));
+    assert (Gegl.has_operation ("example:cogl-texture"));
 
 
     var window = new Example.Window ();

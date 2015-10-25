@@ -8,13 +8,9 @@ namespace Example
         private Gegl.Node        pipeline;
         private Gegl.Node        display_node;
 
-        construct {
-            this.setup ();
-        }
-
-        private void on_buffer_changed ()
+        construct
         {
-            message ("buffer changed");
+            this.setup ();
         }
 
         private void setup_pipeline ()
@@ -25,20 +21,13 @@ namespace Example
             var source = pipeline.create_child ("gegl:load");
             source.set_property ("path", "data/color-checker.png");
 
-            var sink = pipeline.create_child ("gegl:buffer-sink");
-            source.link (sink);
-
-            // this.display_node = pipeline.get_output_proxy ("output");
-            this.display_node = sink;
-
+            this.display_node = source;
             this.pipeline = pipeline;
         }
 
         private void setup ()
         {
             this.setup_pipeline ();
-
-            this.display_node.process ();  // FIXME TODO: process the node by scheduling a task, mere .process () is a blocking operation
 
             // properties
             this.background_color = Clutter.Color.from_pixel (0x222222FF);
@@ -55,7 +44,6 @@ namespace Example
             this.embed.show ();
 
             // stage contents
-            // TODO: There may be many display nodes (in theory) so we should pass the
             var image = new Example.GeglImage (this.display_node);
 
             var stage = this.embed.get_stage ();
@@ -68,6 +56,8 @@ namespace Example
             this.bind_property ("background-color", stage, "color", BindingFlags.SYNC_CREATE);
 
             this.add (this.embed);
+
+            this.display_node.invalidated (this.display_node.introspectable_get_bounding_box ());
         }
 
         public override void dispose ()
