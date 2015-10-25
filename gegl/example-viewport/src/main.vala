@@ -8,6 +8,9 @@ public int main (string[] args)
 
     Gtk.init (ref args);
 
+    var gtk_settings = Gtk.Settings.get_default ();
+    gtk_settings.set ("gtk-application-prefer-dark-theme", true);
+
     // Gegl.load_module_directory ("./operations");
     // assert (Gegl.has_operation ("example:cogl-texture"));
 
