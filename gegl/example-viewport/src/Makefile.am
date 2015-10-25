@@ -6,7 +6,7 @@ example_DEPENDENCIES = \
 example_SOURCES = \
 	internal.c \
 	internal.vapi \
-	gegl-image.vala \
+	gegl-content.vala \
 	main.vala \
 	window.vala
 

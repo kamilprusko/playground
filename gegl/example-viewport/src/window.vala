@@ -56,13 +56,13 @@ namespace Example
             this.embed.show ();
 
             // stage contents
-            var image = new Example.GeglImage (this.display_node);
+            var content = new Example.GeglContent (this.display_node);
 
             var stage = this.embed.get_stage ();
             stage.set_content_scaling_filters (Clutter.ScalingFilter.TRILINEAR,
                                                Clutter.ScalingFilter.LINEAR);
             stage.set_content_gravity (Clutter.ContentGravity.RESIZE_ASPECT);
-            stage.set_content (image);
+            stage.set_content (content);
 
             // signals and bindings
             this.bind_property ("background-color", stage, "color", BindingFlags.SYNC_CREATE);
