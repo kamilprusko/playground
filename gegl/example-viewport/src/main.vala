@@ -15,7 +15,6 @@ public int main (string[] args)
     // assert (Gegl.has_operation ("example:cogl-texture"));
 
     var window = new Example.Window ();
-    window.title = "GEGL Viewport";
     window.window_position = Gtk.WindowPosition.CENTER;
     window.set_default_size (600, 400);
     window.destroy.connect (Gtk.main_quit);
