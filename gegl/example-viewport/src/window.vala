@@ -2,36 +2,37 @@ namespace Example
 {
     public class Window : Gtk.Window
     {
-        public Clutter.Color background_color { get; set; }
+        public GLib.File _file;
+        public GLib.File file {
+            get {
+                return this._file;
+            }
+            set {
+                this._file = value;
 
-        private GtkClutter.Embed embed;
-        private Gegl.Node        pipeline;
-        private Gegl.Node        display_node;
+                if (this._file != null) {
+                    var pipeline = new Gegl.Node ();
+                    pipeline.set_property ("dont-cache", true);
+
+                    var source = pipeline.create_child ("gegl:load");
+                    source.set_property ("path", this._file.get_path ());
+
+                    this.content.node = source;  // TODO: Pass processed buffer rather than whole node
+                                                 // TODO: How to get last child from the pipeline?
+                }
+            }
+        }
+
+        private Example.GeglContent content;
+        private GtkClutter.Embed    embed;
 
         construct
         {
             this.setup ();
         }
 
-        private void setup_pipeline ()
-        {
-            var pipeline = new Gegl.Node ();
-            pipeline.set_property ("dont-cache", true);
-
-            var source = pipeline.create_child ("gegl:load");
-            source.set_property ("path", "data/color-checker.png");
-
-            this.display_node = source;
-            this.pipeline = pipeline;
-        }
-
         private void setup ()
         {
-            this.setup_pipeline ();
-
-            // properties
-            this.background_color = Clutter.Color.from_pixel (0x222222FF);
-
             // widgets
             var header_bar = new Gtk.HeaderBar ();
             header_bar.title = "GEGL Viewport";
@@ -56,25 +57,20 @@ namespace Example
             this.embed.show ();
 
             // stage contents
-            var content = new Example.GeglContent (this.display_node);
+            this.content = new Example.GeglContent (null);
 
             var stage = this.embed.get_stage ();
+            stage.set_background_color (Clutter.Color.from_pixel (0x222222FF));
             stage.set_content_scaling_filters (Clutter.ScalingFilter.TRILINEAR,
                                                Clutter.ScalingFilter.LINEAR);
             stage.set_content_gravity (Clutter.ContentGravity.RESIZE_ASPECT);
-            stage.set_content (content);
-
-            // signals and bindings
-            this.bind_property ("background-color", stage, "color", BindingFlags.SYNC_CREATE);
+            stage.set_content (this.content);
 
             this.add (this.embed);
-
-            this.display_node.invalidated (this.display_node.introspectable_get_bounding_box ());
         }
 
         private void on_open_button_clicked ()
         {
-            // FileChooserDialog
             var file_chooser = new Gtk.FileChooserDialog (
                     "Select image", this, Gtk.FileChooserAction.OPEN,
                     "_Cancel",
@@ -82,13 +78,13 @@ namespace Example
                     "_Open",
                     Gtk.ResponseType.ACCEPT);
 
+            file_chooser.set_modal (true);
+            file_chooser.set_transient_for (this);
+
             var file_filter = new Gtk.FileFilter ();
             file_filter.add_mime_type ("image/jpeg");
             file_filter.add_mime_type ("image/png");
             file_chooser.set_filter (file_filter);
-
-            file_chooser.set_modal (true);
-            file_chooser.set_transient_for (this);
 
             var preview_area = new Gtk.Image ();
             file_chooser.set_preview_widget (preview_area);
@@ -115,12 +111,7 @@ namespace Example
 
             if (file_chooser.run () == Gtk.ResponseType.ACCEPT)
             {
-                var uris = file_chooser.get_uris ();
-                stdout.printf ("Selection:\n");
-
-                foreach (unowned string uri in uris) {
-                    stdout.printf (" %s\n", uri);
-                }
+                this.file = file_chooser.get_file ();
             }
 
             file_chooser.close ();
@@ -128,7 +119,7 @@ namespace Example
 
         public override void dispose ()
         {
-            this.pipeline = null;
+            this.content = null;
 
             base.dispose ();
         }

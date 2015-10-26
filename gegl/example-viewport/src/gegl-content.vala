@@ -13,17 +13,21 @@ namespace Example
             set {
                 var node = value;
 
-                node.invalidated.connect (this.on_node_invalidated);
-                node.computed.connect (this.on_node_computed);
+                if (node != null) {
+                    node.invalidated.connect (this.on_node_invalidated);
+                    node.computed.connect (this.on_node_computed);
+                }
 
                 this._node = node;
+
+                this.invalidate ();
             }
         }
 
         private Cogl.Texture texture;
         private Gegl.Processor processor;
 
-        public GeglContent (Gegl.Node node)
+        public GeglContent (Gegl.Node? node)
         {
             this.node = node;
         }
@@ -50,14 +54,18 @@ namespace Example
         {
             // TODO: only process the node if attached
 
-//            this.node.process ();  // FIXME
+            if (this.node != null) {
+                var box = this.node.introspectable_get_bounding_box ();
+
+                this.node.invalidated (box);
+            }
         }
 
         /**
          *
          */
         public new void paint_content (Clutter.Actor     actor,
-                                   Clutter.PaintNode node)
+                                       Clutter.PaintNode node)
         {
             if (this.texture == null) {
                 return;
@@ -74,7 +82,7 @@ namespace Example
             node.add_child (child_node);
         }
 
-        private void update_texture (Gegl.Buffer buffer)
+        public void update_texture (Gegl.Buffer buffer)
         {
             Cogl.Texture texture = null;
             var rect             = buffer.get_extent ();
@@ -85,8 +93,6 @@ namespace Example
                 message ("cogl_texture %ux%u is set", texture.get_width (), texture.get_height ());
 
                 this.texture = texture;
-
-                this.invalidate ();
             }
             else {
                 message ("cogl_texture_set_data_from_buffer() failed");
