@@ -45,6 +45,10 @@ namespace Example
         private Example.GeglContent content;
         private GtkClutter.Embed    embed;
 
+        private const Gtk.TargetEntry[] TARGET_ENTRIES = {
+            { "text/uri-list", Gtk.TargetFlags.OTHER_APP, 0 }
+        };
+
         construct
         {
             this.setup ();
@@ -108,6 +112,12 @@ namespace Example
                                                Clutter.ScalingFilter.LINEAR);
             stage.set_content_gravity (Clutter.ContentGravity.RESIZE_ASPECT);
             stage.set_content (this.content);
+
+            // drag and drop
+            Gtk.drag_dest_set (this,
+                               Gtk.DestDefaults.ALL,
+                               TARGET_ENTRIES,
+                               Gdk.DragAction.COPY | Gdk.DragAction.LINK);
 
             this.add (this.embed);
         }
@@ -197,6 +207,37 @@ namespace Example
             this.notify_property ("is_fullscreen");
 
             return result;
+        }
+
+        public override void drag_data_received (Gdk.DragContext   context,
+                                                 int               x,
+                                                 int               y,
+                                                 Gtk.SelectionData data,
+                                                 uint              info,
+                                                 uint              time)
+        {
+            if (data.get_length () >= 0)
+            {
+                var action = context.get_selected_action ();
+                var success = false;
+
+                foreach (var uri in data.get_uris ())
+                {
+                    this.file = GLib.File.new_for_uri (uri);
+
+                    success = true;
+
+                    break;
+                }
+
+                // TODO
+                // var pixbuf = data.get_pixbuf ();
+
+                Gtk.drag_finish (context, success, false, time);  // TODO: handle DragAction.MOVE
+            }
+            else {
+                Gtk.drag_finish (context, false, false, time);
+            }
         }
     }
 }
