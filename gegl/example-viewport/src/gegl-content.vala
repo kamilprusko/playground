@@ -5,6 +5,66 @@ namespace Example
      */
     public class GeglContent : GLib.Object, Clutter.Content
     {
+        private class RenderingThread : GLib.Object
+        {
+            public Gegl.Node        node;
+            public Gegl.Buffer      buffer;
+            public Gegl.Rectangle   rect;
+            public GLib.SourceFunc  callback;
+            public GLib.Cancellable cancellable;
+
+            public RenderingThread (Gegl.Node       node)
+                                    // Gegl.Rectangle  rect)
+            {
+                var rect = node.introspectable_get_bounding_box ();
+
+                this.node        = node;
+                this.rect        = rect;
+                this.cancellable = new GLib.Cancellable ();
+
+                this.buffer = new Gegl.Buffer.introspectable_new ("R'G'B' u8",
+                                                                  this.rect.x,
+                                                                  this.rect.y,
+                                                                  this.rect.width,
+                                                                  this.rect.height);
+            }
+
+            public void cancel ()
+            {
+                this.cancellable.cancel ();
+
+                this.cancelled ();
+            }
+
+            public bool on_idle ()
+            {
+                if (!this.cancellable.is_cancelled ()) {
+                    this.completed ();
+                }
+
+                return false;
+            }
+
+            public void* run ()
+            {
+                this.node.blit_buffer (this.buffer, null);
+
+                GLib.Idle.add (this.on_idle, GLib.Priority.HIGH_IDLE);
+
+                return null;
+            }
+
+            public override void dispose ()
+            {
+                this.cancel ();
+
+                base.dispose ();
+            }
+
+            public signal void cancelled ();
+            public signal void completed ();
+        }
+
         private Gegl.Node _node;
         public Gegl.Node node {
             get {
@@ -13,6 +73,11 @@ namespace Example
             set {
                 var node = value;
 
+                if (this.node != null) {
+                    this.node.invalidated.disconnect (this.on_node_invalidated);
+                    this.node.computed.disconnect (this.on_node_computed);
+                }
+
                 if (node != null) {
                     node.invalidated.connect (this.on_node_invalidated);
                     node.computed.connect (this.on_node_computed);
@@ -20,12 +85,12 @@ namespace Example
 
                 this._node = node;
 
-                this.invalidate ();
+                this.invalidate_node ();
             }
         }
 
         private Cogl.Texture texture;
-        private Gegl.Processor processor;
+        private RenderingThread thread;
 
         public GeglContent (Gegl.Node? node)
         {
@@ -37,7 +102,11 @@ namespace Example
          */
         public bool get_preferred_size (out float width, out float height)
         {
-            if (this.texture == null) {
+            if (this.texture == null)
+            {
+                width = 0.0f;
+                height = 0.0f;
+
                 return false;
             }
 
@@ -52,9 +121,14 @@ namespace Example
          */
         public void invalidate ()
         {
+        }
+
+        private void invalidate_node ()
+        {
             // TODO: only process the node if attached
 
-            if (this.node != null) {
+            if (this.node != null)
+            {
                 var box = this.node.introspectable_get_bounding_box ();
 
                 this.node.invalidated (box);
@@ -93,6 +167,8 @@ namespace Example
                 message ("cogl_texture %ux%u is set", texture.get_width (), texture.get_height ());
 
                 this.texture = texture;
+
+                this.invalidate ();
             }
             else {
                 message ("cogl_texture_set_data_from_buffer() failed");
@@ -106,46 +182,30 @@ namespace Example
 
             // TODO: check if invalidated area is visible, if it is then update the region
 
-            // TODO: Make it async
+            // var rect = node.introspectable_get_bounding_box ();
 
-            var box = node.introspectable_get_bounding_box ();
-            var buffer = new Gegl.Buffer.introspectable_new ("R'G'B' u8", box.x, box.y, box.width, box.height);
+            if (this.thread != null) {
+                this.thread.cancel ();
+            }
 
-            node.blit_buffer (buffer, box);
+            this.thread = new RenderingThread (node);
+            this.thread.completed.connect ((thread) => {
+                this.update_texture (thread.buffer);
 
-            this.update_texture (buffer);
+                this.thread = null;
+            });
+
+            try {
+                Thread.create<void*> (this.thread.run, false);
+            }
+            catch (GLib.ThreadError error) {
+                stderr.printf ("Thread error: %s\n", error.message);
+            }
         }
 
         private void on_node_computed (Gegl.Node node, Gegl.Rectangle rectangle)
         {
             message ("node computed: %d, %d %dx%d", rectangle.x, rectangle.y, rectangle.width, rectangle.height);
         }
-
-        //private bool process_idle ()
-        //    // GTask *task = G_TASK (user_data);
-        //    // PhotosBaseItem *self;
-        //    // GCancellable *cancellable;
-
-        //    // cancellable = g_task_get_cancellable (task);
-
-        //    if (g_cancellable_is_cancelled (cancellable)) {
-        //        goto done;
-        //    }
-
-        //    var progress = 0.0;  // there is also this.processor.progress, 
-
-        //    if (this.processor.work (out progress))
-        //    {
-        //        message ("progress = %g", progress);
-
-        //        return GLib.Source.CONTINUE;
-        //    }
-
-        //    message ("progress = %g", progress);
-
-        //    // g_task_return_pointer (task, NULL, NULL);
-
-        //    return GLib.Source.REMOVE;
-        //}
     }
 }
