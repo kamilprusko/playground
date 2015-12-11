@@ -4,11 +4,16 @@ example_DEPENDENCIES = \
 	$(abs_top_builddir)/vapi/gegl-0.3.vapi
 
 example_SOURCES = \
+	clutter-gegl-actor.vala \
+	clutter-gegl-content.vala \
 	internal.c \
 	internal.vapi \
-	gegl-content.vala \
 	main.vala \
-	window.vala
+	pan-action.vala \
+	scroll-actor.vala \
+	stack-layout.vala \
+	window.vala \
+	viewport.vala
 
 example_CFLAGS = \
 	$(EXAMPLE_CFLAGS)

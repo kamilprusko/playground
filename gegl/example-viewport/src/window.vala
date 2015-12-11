@@ -10,15 +10,15 @@ namespace Example
             set {
                 this._file = value;
 
-                if (this._file != null) {
+                if (this._file != null)
+                {
                     var pipeline = new Gegl.Node ();
                     pipeline.set_property ("dont-cache", true);
 
                     var source = pipeline.create_child ("gegl:load");
                     source.set_property ("path", this._file.get_path ());
 
-                    this.content.node = source;  // TODO: Pass processed buffer rather than whole node
-                                                 // TODO: How to get last child from the pipeline?
+                    this.view.node = source; // TODO: How to get last child from the pipeline?
                 }
             }
         }
@@ -42,8 +42,10 @@ namespace Example
             }
         }
 
-        private Example.GeglContent content;
-        private GtkClutter.Embed    embed;
+        private ClutterGegl.Actor view;
+        private Clutter.Actor overlay;
+        private Example.Viewport  viewport;
+        private GtkClutter.Embed  embed;
 
         private const Gtk.TargetEntry[] TARGET_ENTRIES = {
             { "text/uri-list", Gtk.TargetFlags.OTHER_APP, 0 }
@@ -104,14 +106,54 @@ namespace Example
             });
 
             // stage contents
-            this.content = new Example.GeglContent (null);
 
             var stage = this.embed.get_stage ();
             stage.set_background_color (Clutter.Color.from_pixel (0x222222FF));
-            stage.set_content_scaling_filters (Clutter.ScalingFilter.TRILINEAR,
-                                               Clutter.ScalingFilter.LINEAR);
-            stage.set_content_gravity (Clutter.ContentGravity.RESIZE_ASPECT);
-            stage.set_content (this.content);
+
+            // contents
+
+            this.view = new ClutterGegl.Actor ();
+            this.view.set_background_color (Clutter.Color.from_pixel (0x000000FF));
+
+            this.view.x_align = Clutter.ActorAlign.CENTER;
+            this.view.y_align = Clutter.ActorAlign.CENTER;
+
+            // overlay
+
+            this.overlay = new Clutter.Actor ();
+
+            var prev_button = new Clutter.Actor ();
+            prev_button.set_background_color (Clutter.Color.get_static (Clutter.StaticColor.RED));
+            prev_button.set_size (40.0f, 40.0f);
+            prev_button.set_margin_left (12.0f);
+            prev_button.add_constraint (new Clutter.AlignConstraint (this.overlay, Clutter.AlignAxis.X_AXIS, 0.0f));
+            prev_button.add_constraint (new Clutter.AlignConstraint (this.overlay, Clutter.AlignAxis.Y_AXIS, 0.5f));
+
+            var next_button = new Clutter.Actor ();
+            next_button.set_background_color (Clutter.Color.get_static (Clutter.StaticColor.RED));
+            next_button.set_size (40.0f, 40.0f);
+            next_button.set_margin_right (12.0f);
+            next_button.add_constraint (new Clutter.AlignConstraint (this.overlay, Clutter.AlignAxis.X_AXIS, 1.0f));
+            next_button.add_constraint (new Clutter.AlignConstraint (this.overlay, Clutter.AlignAxis.Y_AXIS, 0.5f));
+
+            var toolbar = new Clutter.Actor ();
+            toolbar.set_background_color (Clutter.Color.get_static (Clutter.StaticColor.RED));
+            toolbar.set_size (90.0f, 40.0f);
+            toolbar.set_margin_bottom (12.0f);
+            toolbar.add_constraint (new Clutter.AlignConstraint (this.overlay, Clutter.AlignAxis.X_AXIS, 0.5f));
+            toolbar.add_constraint (new Clutter.AlignConstraint (this.overlay, Clutter.AlignAxis.Y_AXIS, 1.0f));
+
+            this.overlay.add_child (prev_button);
+            this.overlay.add_child (next_button);
+            this.overlay.add_child (toolbar);
+
+            this.viewport = new Example.Viewport ();
+            this.viewport.set_name ("viewport");
+            this.viewport.add_child (this.view);
+
+            stage.layout_manager = new Example.StackLayout ();
+            stage.add_child (this.viewport);
+            // stage.add_child (this.overlay);
 
             // drag and drop
             Gtk.drag_dest_set (this,
@@ -168,13 +210,6 @@ namespace Example
             }
 
             file_chooser.close ();
-        }
-
-        public override void dispose ()
-        {
-            this.content = null;
-
-            base.dispose ();
         }
 
         public override bool key_press_event (Gdk.EventKey event)

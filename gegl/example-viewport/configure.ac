@@ -42,6 +42,8 @@ PKG_CHECK_MODULES(EXAMPLE, [
     cogl-1.0 >= $COGL_REQUIRED
 ])
 
+EXAMPLE_LIBS="$EXAMPLE_LIBS -lm"
+
 INTROSPECTION_GIRDIR=`$PKG_CONFIG \
 --define-variable="prefix=${prefix}" \
 --define-variable="datarootdir=${datarootdir}" \

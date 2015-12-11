@@ -16,7 +16,7 @@ public int main (string[] args)
 
     var window = new Example.Window ();
     window.window_position = Gtk.WindowPosition.CENTER;
-    window.set_default_size (600, 400);
+    window.set_default_size (900, 600);
     window.destroy.connect (Gtk.main_quit);
 
     window.show_all ();
